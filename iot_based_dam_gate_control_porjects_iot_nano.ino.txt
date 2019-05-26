@@ -1,0 +1,387 @@
+/*
+TITLRE: ACCIDENT IDENTIFICATION SYSTEM USING MULTIPLE SENSORS
+PIC16F87A,
+A0=  IR-OBSTACLE,
+A3=  alcohal,
+A1=  SWITCH1- SEAT BELT,
+A2=  SWITCH2- HIGH SPEED DETECTION,
+C0= EYE BLINK SENSOR- DROWSYNESS,
+C1= ENERGYMETER,
+B0=  GSM,
+B1= GPS,
+B2 TO B7 = LCD,
+D1= BUZZER,
+D2= GREEN LED,
+D3 = RED LED,
+c2 = motor driver(1 motor)
+ 
+*/
+
+#include <16F877A.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#fuses HS,NOWDT,PROTECT,brownout,put
+#use  delay  (clock=20000000) //crystall oscillator 
+#include "flex_lcd.c"
+#use rs232(baud=9600, xmit=PIN_B0,stream=GSM)
+#use rs232(baud=9600, rcv=PIN_B1,stream=GPS)
+
+#define buzzer pin_d1
+#define relay pin_c2
+#define gled pin_d2
+#define rled pin_d3
+
+void beep ()
+{
+output_high(buzzer);
+delay_ms(1000);
+output_low(buzzer);
+delay_ms(10);
+}
+
+void send_sms1()
+{
+fprintf(GSM,"AT\r\n");                    /* checks are they communicating */ 
+fprintf(GSM,"ATE0\r\n");
+fprintf(GSM,"AT+CMGF=1\r\n");             /* sends an at command reay to send */
+fprintf(GSM,"AT+CNMI=1,2,0,0\r\n"); 
+fprintf(GSM,"AT+CSMP=17,167,0,0\r\n"); 
+delay_ms(1000);
+fputc(0x0d,GSM);
+delay_ms(1000);                                      
+fprintf(GSM,"AT+CMGS=\"+919848950585\""); /*sends a carriage return */
+fprintf(GSM,"\r\n");                      /* cariage */ 
+fputc(0x0d,GSM); 
+delay_ms(1000); 
+fprintf(GSM,"WELCOME TO ACCIDENT IDENTIFICATION SYSTEM USING MULTIPLE SENSORS\r\n");
+fprintf(GSM,"VEHICLE STARTED...\r\n");
+delay_ms(1500); 
+fprintf(GSM,"\r\n"); 
+fputc(0x1A,GSM);                          /* sends CTRL Z */ 
+}
+
+void drowsysms ()
+{
+fprintf(GSM,"AT\r\n");                    /* checks are they communicating */ 
+fprintf(GSM,"ATE0\r\n");
+fprintf(GSM,"AT+CMGF=1\r\n");             /* sends an at command reay to send */
+fprintf(GSM,"AT+CNMI=1,2,0,0\r\n"); 
+fprintf(GSM,"AT+CSMP=17,167,0,0\r\n"); 
+delay_ms(1000);
+fputc(0x0d,GSM);
+delay_ms(1000);                                      
+fprintf(GSM,"AT+CMGS=\"+919848950585\""); /*sends a carriage return */
+fprintf(GSM,"\r\n");                      /* cariage */ 
+fputc(0x0d,GSM); 
+delay_ms(1000); 
+fprintf(GSM,"DROWSYNESS ALERT AT \r\n");
+fprintf(GSM,"LAT: 17.392098\r\n");fprintf(GSM,"LONG: 78.527671\r\n");
+delay_ms(1500); 
+fprintf(GSM,"\r\n"); 
+fputc(0x1A,GSM);   
+
+}
+
+void highspeedsms ()
+{
+fprintf(GSM,"AT\r\n");                    /* checks are they communicating */ 
+fprintf(GSM,"ATE0\r\n");
+fprintf(GSM,"AT+CMGF=1\r\n");             /* sends an at command reay to send */
+fprintf(GSM,"AT+CNMI=1,2,0,0\r\n"); 
+fprintf(GSM,"AT+CSMP=17,167,0,0\r\n"); 
+delay_ms(1000);
+fputc(0x0d,GSM);
+delay_ms(1000);                                      
+fprintf(GSM,"AT+CMGS=\"+919848950585\""); /*sends a carriage return */
+fprintf(GSM,"\r\n");                      /* cariage */ 
+fputc(0x0d,GSM); 
+delay_ms(1000); 
+fprintf(GSM,"HIGH SPEED ALERT AT \r\n");
+fprintf(GSM,"LAT: 17.392098\r\n");fprintf(GSM,"LONG: 78.527671\r\n");
+delay_ms(1500); 
+fprintf(GSM,"\r\n"); 
+fputc(0x1A,GSM);   
+
+}
+
+void obssms ()
+{
+fprintf(GSM,"AT\r\n");                    /* checks are they communicating */ 
+fprintf(GSM,"ATE0\r\n");
+fprintf(GSM,"AT+CMGF=1\r\n");             /* sends an at command reay to send */
+fprintf(GSM,"AT+CNMI=1,2,0,0\r\n"); 
+fprintf(GSM,"AT+CSMP=17,167,0,0\r\n"); 
+delay_ms(1000);
+fputc(0x0d,GSM);
+delay_ms(1000);                                      
+fprintf(GSM,"AT+CMGS=\"+919848950585\""); /*sends a carriage return */
+fprintf(GSM,"\r\n");                      /* cariage */ 
+fputc(0x0d,GSM); 
+delay_ms(1000); 
+fprintf(GSM,"OBSTACLE ALERT AT \r\n");
+fprintf(GSM,"LAT: 17.392098\r\n");fprintf(GSM,"LONG: 78.527671\r\n");
+delay_ms(1500); 
+fprintf(GSM,"\r\n"); 
+fputc(0x1A,GSM);   
+
+
+}
+
+void alcsms ()
+{
+fprintf(GSM,"AT\r\n");                    /* checks are they communicating */ 
+fprintf(GSM,"ATE0\r\n");
+fprintf(GSM,"AT+CMGF=1\r\n");             /* sends an at command reay to send */
+fprintf(GSM,"AT+CNMI=1,2,0,0\r\n"); 
+fprintf(GSM,"AT+CSMP=17,167,0,0\r\n"); 
+delay_ms(1000);
+fputc(0x0d,GSM);
+delay_ms(1000);                                      
+fprintf(GSM,"AT+CMGS=\"+919848950585\""); /*sends a carriage return */
+fprintf(GSM,"\r\n");                      /* cariage */ 
+fputc(0x0d,GSM); 
+delay_ms(1000); 
+fprintf(GSM,"ALCOHOL ALERT AT \r\n");
+fprintf(GSM,"LAT: 17.392098\r\n");fprintf(GSM,"LONG: 78.527671\r\n");
+delay_ms(1500); 
+fprintf(GSM,"\r\n"); 
+fputc(0x1A,GSM);   
+
+
+}
+
+void main()
+{
+    unsigned int16 value=0;
+    
+    unsigned int obs = 0;
+    unsigned int sw1 = 0;
+    unsigned int sw2 = 0;
+    unsigned int alc = 0;
+    
+    setup_adc(ADC_CLOCK_INTERNAL);
+   setup_adc_ports( ALL_ANALOG );
+    
+   lcd_init();  
+  
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"    ACCIDENT    ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc," IDENTIFICATION ");
+   delay_ms(2000);
+    
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"  SYSTEM USING  ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"MULTIPLE SENSORS");
+   delay_ms(2000);
+    
+   output_high(PIN_D2);
+    output_high(PIN_D3);    
+    output_high(PIN_C5);
+    output_high(PIN_C4);
+    beep ();
+    delay_ms(500);   
+    output_low(PIN_D2);
+    output_low(PIN_D3);    
+    output_low(PIN_C5);
+    output_low(PIN_C4);
+    delay_ms(500);
+    
+    send_sms1();
+    
+    output_high(PIN_D2);
+    output_high(PIN_D3);    
+    output_high(PIN_C5);
+    output_high(PIN_C4);
+    delay_ms(500);   
+    output_low(PIN_D2);
+    output_low(PIN_D3);    
+    output_low(PIN_C5);
+    output_low(PIN_C4);
+     delay_ms(500);    
+  output_high(PIN_D2);
+    output_high(PIN_D3);    
+    output_high(PIN_C5);
+    output_high(PIN_C4);
+    beep ();
+    delay_ms(500);   
+    output_low(PIN_D2);
+    output_low(PIN_D3);    
+    output_low(PIN_C5);
+    output_low(PIN_C4);
+    
+    output_high(relay);
+    //delay_ms(2000);
+    
+   while(true)
+   {
+                     
+      set_adc_channel(0);
+      delay_ms(10);// delay built-in function call
+      obs = Read_ADC();  
+      delay_ms(5);
+         
+      set_adc_channel(1);
+      delay_ms(10);// delay built-in function call
+      sw1 = Read_ADC();  
+      delay_ms(5);
+         
+      set_adc_channel(2);
+      delay_ms(10);// delay built-in function call
+      sw2 = Read_ADC();  
+      delay_ms(5);
+            
+             set_adc_channel(3);
+      delay_ms(10);// delay built-in function call
+      alc = Read_ADC();  
+      delay_ms(5);
+         
+       set_timer1(0);   
+      setup_timer_1(t1_external | T1_DIV_BY_1);//c0
+      output_low(pin_d2);
+      delay_ms(2000);      //3000     
+     //setup_timer_1(T1_DISABLED);
+      value=get_timer1();
+       value=value+1;
+       //value=value*10;
+            printf(lcd_putc,"\f");
+      lcd_gotoxy(1,1);
+      printf(lcd_putc,"count=%LU",value); 
+     delay_ms(300);
+     output_high(pin_d2);
+    
+  if  (alc>220)
+    {
+    output_low(relay);
+delay_ms(100);
+output_high(rled);
+output_low(gled);
+
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc," ALCOHOL ALERT ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"SENDING SMS......");
+   beep ();
+   delay_ms(1000);
+alcsms ();
+  lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+    printf(lcd_putc," ALCOHOL ALERT ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"****SMS SENT****");
+   delay_ms(600);
+    }
+    
+ 
+
+else if (sw1<160)
+{
+output_low(relay);
+delay_ms(100);
+output_high(rled);
+output_low(gled);
+
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"PLZ PUT ON YOUR");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"   SEAT BELT   ");
+  beep ();
+   delay_ms(1000);
+
+}
+else if (sw2>160)
+{
+output_low(relay);
+delay_ms(100);
+output_high(rled);
+output_low(gled);
+
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"HIGH SPEED ALERT");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"SENDING SMS......");
+  beep ();
+   delay_ms(1000);
+highspeedsms ();
+  lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"HIGH SPEED ALERT");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"****SMS SENT****");
+   delay_ms(600);
+
+}
+else if (obs>160)
+{
+output_low(relay);
+delay_ms(100);
+output_high(rled);
+output_low(gled);
+
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc," OBSTACLE ALERT ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"SENDING SMS......");
+   beep ();
+   delay_ms(1000);
+obssms ();
+  lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc," OBSTACLE ALERT ");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"****SMS SENT****");
+   delay_ms(600);
+
+}
+else if (value<2)
+{
+output_low(relay);
+delay_ms(100);
+
+output_high(rled);
+output_low(gled);
+
+   lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"DROWSYNES ALERT");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"SENDING SMS......");
+   beep ();
+   delay_ms(1000);
+drowsysms ();
+  lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"DROWSYNES ALERT");
+   lcd_gotoxy(1,2);
+   printf(lcd_putc,"****SMS SENT****");
+   delay_ms(600);
+}
+else 
+{
+output_high(gled);
+output_low(rled);
+output_low(buzzer);
+output_high(relay);
+
+ lcd_putc('\f');         //Clear LCD 
+   lcd_gotoxy(1,1);
+   printf(lcd_putc,"SYSTEM IS NORMAL");
+   lcd_gotoxy(1,2);
+   //printf(lcd_putc,"*****************");
+   printf(lcd_putc,"ALC= %u",alc);
+   delay_ms(100);
+
+}
+
+   
+   } //WHILE LOOP 
+}
+    
